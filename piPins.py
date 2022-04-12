@@ -66,6 +66,7 @@ class CarController:
         GPIO.output(in4_pin, GPIO.HIGH)
         
     def go_back(self):
+        self._stop_later("back")
         GPIO.output(in3_pin, GPIO.HIGH)
         GPIO.output(in4_pin, GPIO.LOW)
 
@@ -77,13 +78,13 @@ class CarController:
         GPIO.output(in1_pin, GPIO.HIGH)
         GPIO.output(in2_pin, GPIO.LOW)
         
-    def turn_forward(self):
+    def turn_straight(self):
         GPIO.output(in1_pin, GPIO.LOW)
         GPIO.output(in2_pin, GPIO.LOW)
             
     def _stop_all(self):
         logging.info("in _stop_all")
-        # Записываем нолик в пины
+        # Записываем нолик в пины, т.е. останавливаем и выприм руль
         GPIO.output(in1_pin, GPIO.LOW)
         GPIO.output(in2_pin, GPIO.LOW)
         GPIO.output(in3_pin, GPIO.LOW)
@@ -103,11 +104,13 @@ class CarController:
     def ride(self, angle, strength):
         logging.info("ride: angle=%s; strength=%s", angle, strength)
         if strength < 50:
+            self.turn_straight()
             self._stop_all()
         elif 0 <= angle <= 59:  # TODO: forward-right
             self.turn_right()
             self.go_forward()
         elif 60 <= angle <= 119:  # TODO: forward
+            self.turn_straight()
             self.go_forward()
         elif 120 <= angle <= 179:  # TODO: forward-left
             self.turn_left()
@@ -116,6 +119,7 @@ class CarController:
             self.turn_left()
             self.go_back()
         elif 240 <= angle <= 299:  # TODO: back
+            self.turn_straight()
             self.go_back()
         elif 300 <= angle <= 360:  # TODO: back-right
             self.turn_right()
@@ -128,7 +132,21 @@ if __name__ == "__main__":
     with CarController() as c:
 #        c.go_forward()
 #        sleep(1)
+        c.ride(0,51)
+        sleep(4)
+        c.ride(60,51)
+        sleep(4)
+        c.ride(120,51)
+        sleep(4)
+        c.ride(180,51)
+        sleep(4)
+        c.ride(240,51)
+        sleep(4)
         c.ride(300,51)
+        sleep(4)
+        c.ride(300,40)
+        sleep(4)
+        
         sleep(1)
         #c._stop_all()
         #c.go_back()
