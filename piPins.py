@@ -55,7 +55,7 @@ class CarController:
         self._stop_all()
 
         self.pwm_a = GPIO.PWM(ena_pin,1000)
-        self.pwm_a.start(50)  # эта тяга двигателя
+        self.pwm_a.start(100)  # эта тяга двигателя
         self.pwm_b = GPIO.PWM(enb_pin,1000)
         self.pwm_b.start(100) # эта руль
 
@@ -105,7 +105,10 @@ class CarController:
         
     def ride(self, angle, strength):
         logging.info("ride: angle=%s; strength=%s", angle, strength)
-        if 80 <= angle <= 100 or 260 <= angle <= 280:
+        self.pwm_a.start(strength)
+        if strength < 33:
+            self._stop_all()
+        elif 80 <= angle <= 100 or 260 <= angle <= 280:
             self.turn_straight()
         elif 100 <= angle <= 260:
             self.turn_left()
