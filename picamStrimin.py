@@ -6,8 +6,10 @@ import socketserver
 from threading import Condition
 from http import server
 from piPins import *
+import json
 
 post_count = 0
+car = CarController()
 
 # https://picamera.readthedocs.io/en/release-1.13/recipes2.html#web-streaming
 
@@ -70,7 +72,11 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         content_len = int(self.headers.get('Content-Length'))
         post_body = self.rfile.read(content_len)
         #logging.info(type(post_body))
-        logging.info("post_body " + post_body.decode("utf-8"))
+        s = post_body.decode("utf-8")
+        logging.info("post_body " + s)
+        s = json.loads(s)
+        angle, strength = s["angle"], s["strength"]
+        car.ride(angle, strength)
         content = '{"result":"ok"}'.encode('utf-8')
         self.send_response(200)
         self.send_header('Content-Type', 'application/json; utf-8')

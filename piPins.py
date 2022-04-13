@@ -55,7 +55,7 @@ class CarController:
         self._stop_all()
 
         self.pwm_a = GPIO.PWM(ena_pin,1000)
-        self.pwm_a.start(100)
+        self.pwm_a.start(50)  # эта тяга двигателя
         self.pwm_b = GPIO.PWM(enb_pin,1000)
         self.pwm_b.start(100) # эта руль
 
@@ -68,6 +68,10 @@ class CarController:
     def go_back(self):
         self._stop_later("back")
         GPIO.output(in3_pin, GPIO.HIGH)
+        GPIO.output(in4_pin, GPIO.LOW)
+        
+    def go_stop(self):
+        GPIO.output(in3_pin, GPIO.LOW)
         GPIO.output(in4_pin, GPIO.LOW)
 
     def turn_left(self):
@@ -85,15 +89,13 @@ class CarController:
     def _stop_all(self):
         logging.info("in _stop_all")
         # Записываем нолик в пины, т.е. останавливаем и выприм руль
-        GPIO.output(in1_pin, GPIO.LOW)
-        GPIO.output(in2_pin, GPIO.LOW)
-        GPIO.output(in3_pin, GPIO.LOW)
-        GPIO.output(in4_pin, GPIO.LOW)
+        self.turn_straight()
+        self.go_stop()
         
-    def _stop_later(self,name):
+    def _stop_later(self,name="nd"):
         if not self.t is None:
             self.t.cancel()
-        self.t = threading.Timer(2.0, self._do_stop, {name})
+        self.t = threading.Timer(0.25, self._do_stop, {name})
         logging.info("in stop_later %s", name)
         self.t.start()
 
@@ -103,35 +105,29 @@ class CarController:
         
     def ride(self, angle, strength):
         logging.info("ride: angle=%s; strength=%s", angle, strength)
-        if strength < 50:
+        if 80 <= angle <= 100 or 260 <= angle <= 280:
             self.turn_straight()
+        elif 100 <= angle <= 260:
+            self.turn_left()
+        else:
+            self.turn_right()
+            
+        if strength < 33:
             self._stop_all()
-        elif 0 <= angle <= 59:  # TODO: forward-right
-            self.turn_right()
+        elif 10 <= angle <= 170:
             self.go_forward()
-        elif 60 <= angle <= 119:  # TODO: forward
-            self.turn_straight()
-            self.go_forward()
-        elif 120 <= angle <= 179:  # TODO: forward-left
-            self.turn_left()
-            self.go_forward()
-        elif 180 <= angle <= 239:  # TODO: back-left
-            self.turn_left()
+        elif 190 <= angle <= 350:
             self.go_back()
-        elif 240 <= angle <= 299:  # TODO: back
-            self.turn_straight()
-            self.go_back()
-        elif 300 <= angle <= 360:  # TODO: back-right
-            self.turn_right()
-            self.go_back()
+        else:
+            self.go_stop()
+            
+        self._stop_later("ride")
     
 
 if __name__ == "__main__":
     format = "%(asctime)s: %(message)s"
-    logging.basicConfig(format=format, level=logging.INFO ) # , datefmt="%H:%M:%S,%03d" )
+    logging.basicConfig(format=format, level=logging.INFO )
     with CarController() as c:
-#        c.go_forward()
-#        sleep(1)
         c.ride(0,51)
         sleep(4)
         c.ride(60,51)
@@ -147,7 +143,7 @@ if __name__ == "__main__":
         c.ride(300,40)
         sleep(4)
         
-        sleep(1)
+        sleep(2)
         #c._stop_all()
         #c.go_back()
         
